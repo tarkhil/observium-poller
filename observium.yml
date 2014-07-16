@@ -1,0 +1,12 @@
+---
+database:
+   host: localhost
+   driver: mysql
+   user: observium
+   password: crematDed
+   database: observium
+network:
+   fping: /usr/local/sbin/fping
+   timeout: 500
+   retries: 3
+

@@ -44,6 +44,7 @@ __PACKAGE__->table("devices_attribs");
 =head2 device_id
 
   data_type: 'integer'
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 attrib_type
@@ -70,7 +71,7 @@ __PACKAGE__->add_columns(
   "attrib_id",
   { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
   "device_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "attrib_type",
   { data_type => "varchar", is_nullable => 0, size => 128 },
   "attrib_value",
@@ -96,9 +97,26 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("attrib_id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 11:23:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RljfnSf0n610rdtMug+Rag
+=head2 device
+
+Type: belongs_to
+
+Related object: L<Schema::Result::Device>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "device",
+  "Schema::Result::Device",
+  { device_id => "device_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 14:22:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:R9v2YorLBhXHgfcoKNgeqA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

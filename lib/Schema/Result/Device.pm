@@ -510,9 +510,26 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("device_id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 11:23:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bPkQQtsZOWg4cz+PosPR/A
+=head2 devices_attribs
+
+Type: has_many
+
+Related object: L<Schema::Result::DevicesAttrib>
+
+=cut
+
+__PACKAGE__->has_many(
+  "devices_attribs",
+  "Schema::Result::DevicesAttrib",
+  { "foreign.device_id" => "self.device_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 14:22:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SfXgg5JH3YkGE53p6HwTzg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

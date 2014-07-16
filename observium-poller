@@ -1,8 +1,93 @@
 #!/usr/bin/perl
 use strict;
 use FindBin;
-use lib "$Bin/lib";
+use lib "$FindBin::Bin/lib";
 use Schema;
-use PHP::Serialization;
+use PHP::Serialization qw(unserialize);
 use Net::SNMP;
 use Getopt::Long;
+use Poller;
+use Utils;
+use Config::Any;
+use Regexp::Common qw/net/;
+
+our $cfg = Config::Any->load_files( { files => [ "observium.yml", "os.json" ], use_ext => 1  } );
+
+our ($hosts, $debug, $norrd, $quiet) = ( '', 0, 0, 0 );
+
+my $result = GetOptions ( 'hosts=s' => \$hosts, 'debug=i' => \$debug, 'norrd' => \$norrd, 'quiet' => \$quiet );
+
+sub usage {
+  print STDERR 'Usage: observium-poller --hosts=[all|numbers] --debug=debug_level --norrd --quiet', "\n";
+  exit EX_USAGE;
+}
+
+if ( !$result || $hosts le '' ) {
+  usage();
+}
+debug_msg( 5, 'Config::Any: ', join(', ', Config::Any->plugins()), "\n", join(':',Config::Any->extensions()), "\n" );
+
+my $config = $cfg->[0]->{ 'observium.yml' };
+my $os = $cfg->[1]->{ 'os.json' };
+use Data::Dumper;
+#print Dumper($cfg);
+my $data = Schema->connect( join( ':', 'dbi', $config->{database}->{driver}, 'host='.$config->{database}->{host}.';dbname='.$config->{database}->{database} ),
+			    $config->{database}->{user}, $config->{database}->{password}, { lc($config->{database}->{drive}).'_enable_utf8' => 1, RaiseError => 1, AutoCommit => 1 });
+
+my $devices = $data->resultset('Device')->search_rs( { disabled => 0 },
+					      { 
+					       select => [qw/device_id device_state hostname os /]
+					      } );
+if ( $hosts ne 'all' ) {
+  # Do not support BETWEEN right now
+  $devices = $devices->search_rs( { -in => $hosts } );
+}
+
+my $devlist = { map +( $_->hostname => { $_->get_inflated_columns } ), $devices->all() };
+#print Dumper $devlist;
+# First of all: fping them
+my $pinglist = {  map { +"$_" => 0 } keys %$devlist };
+my $fping = $config->{network}->{fping}." -t ".$config->{network}->{timeout}." -c 5 -q ";
+#print $fping;
+my $try = 0;
+while ( $try++ < $config->{network}->{retries} ) {
+  print "Pinging ", join(' ', keys %$pinglist), "\n";
+  open(PING, "$fping ".join(' ', keys %$pinglist)." 2>&1 |")
+    or die "Could not $fping: $!";
+#  open PING, "/usr/local/sbin/fping -t 500 -c 1 -q  vw-159.cpn.infotel.ru audi-404.cpn.infotel.ru vw-166.cpn.infotel.ru 2>&1 |";
+  # fping returns
+  # audi-371.cpn.infotel.ru  : xmt/rcv/%loss = 5/0/100%
+  # skoda-889.cpn.infotel.ru : xmt/rcv/%loss = 5/5/0%, min/avg/max = 44.8/45.1/45.5
+  # We're interested in hostname and loss percentage
+  while (<PING>) {
+    die unless m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%|;
+#    print $1, ": ", $4, " per cent loss\n";
+    if ( $4 != 100 ) {
+       my $host = $1;
+      die "$_ is wrong" unless  m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%, min/avg/max = (\d+(\.\d+)?)/(\d+(\.\d+)?)/(\d+(\.\d+)?)|;
+      $devlist->{$host}->{ping} = $7;
+      delete $pinglist->{$host};
+    }
+  }
+  close PING;
+  # Are ALL of them OK?
+  last if (scalar(keys(%$pinglist)) == 0);
+
+}
+
+foreach my $devname ( sort keys %$devlist ) {
+  my $device = $devlist->{$devname};
+  debug_msg(1, $device->{device_id}, ': ', $device->{hostname}, ', OS: ', $device->{os}, "\n");
+  if ( $os->{ $device->{os} } ) {
+    my $os_group = $os->{ $device->{os} }->{group};
+    debug_msg(1, $os_group);
+  }
+  if ( exists $device->{ping} ) {
+    print " * ", $device->{ping}, "\n";
+  }
+  else {
+    print " * Dead\n";
+  }
+  # Todo: make RRD here
+  
+}
