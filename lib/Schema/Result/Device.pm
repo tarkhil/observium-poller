@@ -527,10 +527,52 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 sensors
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 14:22:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SfXgg5JH3YkGE53p6HwTzg
+Type: has_many
+
+Related object: L<Schema::Result::Sensor>
+
+=cut
+
+__PACKAGE__->has_many(
+  "sensors",
+  "Schema::Result::Sensor",
+  { "foreign.device_id" => "self.device_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
 
 
-# You can replace this text with custom code or comments, and it will be preserved on regeneration
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-17 20:47:54
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pEajENN+Dwvju2l9oWw5xA
+
+=head1 ACCESS FUNCTIONS
+
+=head2 get_pollers
+
+Get all active pollers for device
+
+=cut
+
+sub get_pollers {
+  my $self = shift;
+  my $disabled = $self->search_related( 'devices_attribs', 
+				       {
+					attrib_value => 0,
+					attrib_type => { -like => 'poll_%' },
+				       },
+				      {
+				       select => [ \"substr(attrib_type,6)" ],
+				      });
+  return $self->result_source->schema->resultset('Poller')->search_rs
+    ( {
+       enabled => 1,
+       name => {
+		'not in' => $disabled->as_query()
+	       },
+      },
+      { Select => [qw/name/] } );
+}
+
+
 1;
