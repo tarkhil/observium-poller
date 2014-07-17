@@ -12,7 +12,7 @@ use Utils;
 use Config::Any;
 use Regexp::Common qw/net/;
 use Data::Dumper;
-sub snmp_cb {
+sub snmp_get_cb {
   my ( $session, $device ) = @_;
 #  print "Running Callback\n";
   my $list;
@@ -110,12 +110,11 @@ while ( ($try++ < $config->{network}->{retries}) && scalar(keys(%$pinglist)) > 0
 
 # Now, for all alive devices, get SNMP
 my %table;
-print oid("sysObjectID.0");
+print oid("sysObjectID");
 foreach ( @$snmplist ) {
   my $result = $devlist->{$_}->{snmp}->get_request(
 							-callback => [ \&snmp_get_cb, $devlist->{$_} ],
 							-varbindlist => [oid("sysObjectID")],
-#							-maxrepetitions => 10,
 						  );
   if ( !$result ) {
     print "Cannot bulk for $_ ", $devlist->{$_}->{snmp}->error(), "\n";
@@ -125,12 +124,6 @@ foreach ( @$snmplist ) {
 }
 print "Starting dispatcher\n";
 snmp_dispatcher();
-map { 
-  if ( exists $devlist->{$_}->{snmp} ) { 
-    $devlist->{$_}->{snmp_data} = {};
-  } 
-} @$snmplist;
-print Dumper \%table;
 
 foreach my $devname ( sort keys %$devlist ) {
   my $device = $devlist->{$devname};
@@ -143,7 +136,7 @@ foreach my $devname ( sort keys %$devlist ) {
   if ( exists $device->{ping} ) {
     print " * ping: ", $device->{ping}, "\n";
     if ( exists $device->{snmp_data} ) {
-      
+      print " Going to add SNMP according to tables\n";
     }
     else {
       print " * Dead (SNMP)\n";
