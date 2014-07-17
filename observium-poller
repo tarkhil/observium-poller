@@ -14,10 +14,10 @@ use Regexp::Common qw/net/;
 use Data::Dumper;
 sub snmp_cb {
   my ( $session, $device ) = @_;
-#  print "Running Callback\n";
+  print "Running Callback\n";
   my $list;
   $list = $session->var_bind_list();
-#  print "List is: ", Dumper $list;
+  print "List is: ", Dumper $list;
   $device->{snmp_data} = $list;
   return;
 }
@@ -56,7 +56,9 @@ if ( $hosts ne 'all' ) {
   $devices = $devices->search_rs( { device_id => { -in => [ split/,/, $hosts ] } } );
 }
 
-my $devlist = { map +( $_->hostname => { $_->get_inflated_columns } ), $devices->all() };
+my $devlist = { map +( $_->hostname => $_ ), $devices->all() };
+
+
 #print Dumper $devlist;
 # First of all: fping them
 my $pinglist = {  map { +"$_" => 0 } keys %$devlist };
@@ -85,14 +87,14 @@ while ( ($try++ < $config->{network}->{retries}) && scalar(keys(%$pinglist)) > 0
  "\n";
       my ($snmp,$error) =  Net::SNMP->session(
 					      -hostname => $host,
-					      -version => 'snmp'.$device->{snmpver}, 
-					      -username => $device->{authname}, 
-					      -authprotocol => $device->{authalgo},
-					      -authpassword => $device->{authpass},
-					      -privprotocol => $device->{cryptoalgo},
-					      -privpassword => $device->{cryptopass},
-					      -port => $device->{port}, -timeout => $device->{timeout}||5,
-					      -retries => $device->{retries}||1,
+					      -version => 'snmp'.$device->snmpver, 
+					      -username => $device->authname, 
+					      -authprotocol => $device->authalgo,
+					      -authpassword => $device->authpass,
+					      -privprotocol => $device->cryptoalgo,
+					      -privpassword => $device->cryptopass,
+					      -port => $device->port, -timeout => $device->timeout||5,
+					      -retries => $device->retries||1,
 					      -nonblocking => 1,
 					     );
       if ( !defined $snmp ) {
@@ -109,8 +111,6 @@ while ( ($try++ < $config->{network}->{retries}) && scalar(keys(%$pinglist)) > 0
 
 
 # Now, for all alive devices, get SNMP
-my %table;
-print oid("sysObjectID.0");
 foreach ( @$snmplist ) {
   my $result = $devlist->{$_}->{snmp}->get_request(
 							-callback => [ \&snmp_get_cb, $devlist->{$_} ],
@@ -123,27 +123,24 @@ foreach ( @$snmplist ) {
     delete $devlist->{$_}->{snmp};
   }
 }
-print "Starting dispatcher\n";
+debug_msg(1, "Starting dispatcher\n");
+
 snmp_dispatcher();
-map { 
-  if ( exists $devlist->{$_}->{snmp} ) { 
-    $devlist->{$_}->{snmp_data} = {};
-  } 
-} @$snmplist;
-print Dumper \%table;
+
 
 foreach my $devname ( sort keys %$devlist ) {
   my $device = $devlist->{$devname};
-  debug_msg(1, $device->{device_id}, ': ', $device->{hostname}, ', OS: ', $device->{os}, ' ', $device->{status}, "\n");
-  if ( $os->{ $device->{os} } ) {
-    my $os_group = $os->{ $device->{os} }->{group};
+  debug_msg(1, $device->device_id, ': ', $device->hostname, ', OS: ', $device->os, ' ', $device->status, "\n");
+  if ( $os->{ $device->os } ) {
+    my $os_group = $os->{ $device->os }->{group};
     debug_msg(1, $os_group);
   }
   my $newstatus = exists $device->{ping} && exists $device->{snmp_data};
   if ( exists $device->{ping} ) {
     print " * ping: ", $device->{ping}, "\n";
+    my $attribs = $device->search_related( 'devices_attribs', { attrib_type => { -like => 'poll_%' } } );;
+    map { print Dumper {$_->get_columns}; } $attribs->all();
     if ( exists $device->{snmp_data} ) {
-      
     }
     else {
       print " * Dead (SNMP)\n";
@@ -151,7 +148,7 @@ foreach my $devname ( sort keys %$devlist ) {
   } else {
     print " * Dead (ping)\n";
   }
-  if ( $newstatus != $device->{status} ) {
+  if ( $newstatus != $device->status ) {
     print " # Status changed\n";
   }
   # Todo: make RRD here
