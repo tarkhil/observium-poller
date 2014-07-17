@@ -9,4 +9,6 @@ network:
    fping: /usr/local/sbin/fping
    timeout: 500
    retries: 3
+   pings: 1
+
 

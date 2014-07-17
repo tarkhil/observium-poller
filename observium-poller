@@ -11,7 +11,6 @@ use Poller;
 use Utils;
 use Config::Any;
 use Regexp::Common qw/net/;
-use SNMP::Query::AsynchMulti;
 use Data::Dumper;
 sub snmp_cb {
   my ( $session, $device ) = @_;
@@ -61,7 +60,7 @@ my $devlist = { map +( $_->hostname => { $_->get_inflated_columns } ), $devices-
 #print Dumper $devlist;
 # First of all: fping them
 my $pinglist = {  map { +"$_" => 0 } keys %$devlist };
-my $fping = $config->{network}->{fping}." -t ".$config->{network}->{timeout}." -c 1 -q ";
+my $fping = $config->{network}->{fping}." -t ".$config->{network}->{timeout}." -c $config->{network}->{pings} -q ";
 my $snmplist = [];
 #print $fping;
 my $try = 0;
