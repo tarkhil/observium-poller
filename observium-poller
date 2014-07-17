@@ -43,6 +43,7 @@ my $os = $cfg->[1]->{ 'os.json' };
 use Data::Dumper;
 #print Dumper($cfg);
 my $data = Schema->connect( join( ':', 'dbi', $config->{database}->{driver}, 'host='.$config->{database}->{host}.';dbname='.$config->{database}->{database} ),
+
 			    $config->{database}->{user}, $config->{database}->{password}, { lc($config->{database}->{drive}).'_enable_utf8' => 1, RaiseError => 1, AutoCommit => 1 });
 
 my $devices = $data->resultset('Device')->search_rs( { disabled => 0 },
@@ -125,6 +126,8 @@ foreach ( @$snmplist ) {
 print "Starting dispatcher\n";
 snmp_dispatcher();
 
+my $poller = new Poller( schema => $data );
+
 foreach my $devname ( sort keys %$devlist ) {
   my $device = $devlist->{$devname};
   debug_msg(1, $device->device_id, ': ', $device->hostname, ', OS: ', $device->os, ' ', $device->status, "\n");
@@ -137,8 +140,7 @@ foreach my $devname ( sort keys %$devlist ) {
     print " * ping: ", $device->{ping}, "\n";
     if ( exists $device->{snmp_data} ) {
       print " Going to add SNMP according to tables\n";
-      my $polls = $device->get_pollers();
-      print join(':', $polls->get_column('name')->all()), "\n";
+      $poller->requests( $device );
     }
     else {
       print " * Dead (SNMP)\n";
