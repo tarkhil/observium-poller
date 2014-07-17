@@ -5,11 +5,23 @@ use lib "$FindBin::Bin/lib";
 use Schema;
 use PHP::Serialization qw(unserialize);
 use Net::SNMP;
+use Net::SNMP::Util::OID qw(system* interfaces* at* ip* icmp* tcp* udp* egp* snmp* tcp*);
 use Getopt::Long;
 use Poller;
 use Utils;
 use Config::Any;
 use Regexp::Common qw/net/;
+use SNMP::Query::AsynchMulti;
+use Data::Dumper;
+sub snmp_cb {
+  my ( $session, $device ) = @_;
+#  print "Running Callback\n";
+  my $list;
+  $list = $session->var_bind_list();
+#  print "List is: ", Dumper $list;
+  $device->{snmp_data} = $list;
+  return;
+}
 
 our $cfg = Config::Any->load_files( { files => [ "observium.yml", "os.json" ], use_ext => 1  } );
 
@@ -36,57 +48,112 @@ my $data = Schema->connect( join( ':', 'dbi', $config->{database}->{driver}, 'ho
 
 my $devices = $data->resultset('Device')->search_rs( { disabled => 0 },
 					      { 
-					       select => [qw/device_id device_state hostname os /]
+					       select => [qw/device_id device_state hostname 
+							     os status community authlevel authname authpass
+							     authalgo cryptopass cryptoalgo snmpver port timeout retries/]
 					      } );
 if ( $hosts ne 'all' ) {
   # Do not support BETWEEN right now
-  $devices = $devices->search_rs( { -in => $hosts } );
+  $devices = $devices->search_rs( { device_id => { -in => [ split/,/, $hosts ] } } );
 }
 
 my $devlist = { map +( $_->hostname => { $_->get_inflated_columns } ), $devices->all() };
 #print Dumper $devlist;
 # First of all: fping them
 my $pinglist = {  map { +"$_" => 0 } keys %$devlist };
-my $fping = $config->{network}->{fping}." -t ".$config->{network}->{timeout}." -c 5 -q ";
+my $fping = $config->{network}->{fping}." -t ".$config->{network}->{timeout}." -c 1 -q ";
+my $snmplist = [];
 #print $fping;
 my $try = 0;
-while ( $try++ < $config->{network}->{retries} ) {
+while ( ($try++ < $config->{network}->{retries}) && scalar(keys(%$pinglist)) > 0 ) {
   print "Pinging ", join(' ', keys %$pinglist), "\n";
   open(PING, "$fping ".join(' ', keys %$pinglist)." 2>&1 |")
     or die "Could not $fping: $!";
-#  open PING, "/usr/local/sbin/fping -t 500 -c 1 -q  vw-159.cpn.infotel.ru audi-404.cpn.infotel.ru vw-166.cpn.infotel.ru 2>&1 |";
   # fping returns
   # audi-371.cpn.infotel.ru  : xmt/rcv/%loss = 5/0/100%
   # skoda-889.cpn.infotel.ru : xmt/rcv/%loss = 5/5/0%, min/avg/max = 44.8/45.1/45.5
   # We're interested in hostname and loss percentage
   while (<PING>) {
     die unless m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%|;
-#    print $1, ": ", $4, " per cent loss\n";
     if ( $4 != 100 ) {
-       my $host = $1;
-      die "$_ is wrong" unless  m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%, min/avg/max = (\d+(\.\d+)?)/(\d+(\.\d+)?)/(\d+(\.\d+)?)|;
+      my $host = $1;
+      die "$_ is wrong" 
+	unless  m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%, min/avg/max = (\d+(\.\d+)?)/(\d+(\.\d+)?)/(\d+(\.\d+)?)|;
       $devlist->{$host}->{ping} = $7;
       delete $pinglist->{$host};
+      my $device = $devlist->{$host};
+#      print join(' ', $device->{authname}, $device->{authalgo},$device->{authpass}, $device->{cryptoalgo},$device->{cryptopass}),
+ "\n";
+      my ($snmp,$error) =  Net::SNMP->session(
+					      -hostname => $host,
+					      -version => 'snmp'.$device->{snmpver}, 
+					      -username => $device->{authname}, 
+					      -authprotocol => $device->{authalgo},
+					      -authpassword => $device->{authpass},
+					      -privprotocol => $device->{cryptoalgo},
+					      -privpassword => $device->{cryptopass},
+					      -port => $device->{port}, -timeout => $device->{timeout}||5,
+					      -retries => $device->{retries}||1,
+					      -nonblocking => 1,
+					     );
+      if ( !defined $snmp ) {
+	print "Error adding SNMP for $host: $error\n";
+      }
+      else {
+	$devlist->{$host}->{snmp} = $snmp;
+	push @$snmplist, $host;
+      }
     }
   }
   close PING;
-  # Are ALL of them OK?
-  last if (scalar(keys(%$pinglist)) == 0);
-
 }
+
+
+# Now, for all alive devices, get SNMP
+my %table;
+print oid("sysObjectID.0");
+foreach ( @$snmplist ) {
+  my $result = $devlist->{$_}->{snmp}->get_request(
+							-callback => [ \&snmp_get_cb, $devlist->{$_} ],
+							-varbindlist => [oid("sysObjectID")],
+#							-maxrepetitions => 10,
+						  );
+  if ( !$result ) {
+    print "Cannot bulk for $_ ", $devlist->{$_}->{snmp}->error(), "\n";
+    $devlist->{$_}->{snmp}->close();
+    delete $devlist->{$_}->{snmp};
+  }
+}
+print "Starting dispatcher\n";
+snmp_dispatcher();
+map { 
+  if ( exists $devlist->{$_}->{snmp} ) { 
+    $devlist->{$_}->{snmp_data} = {};
+  } 
+} @$snmplist;
+print Dumper \%table;
 
 foreach my $devname ( sort keys %$devlist ) {
   my $device = $devlist->{$devname};
-  debug_msg(1, $device->{device_id}, ': ', $device->{hostname}, ', OS: ', $device->{os}, "\n");
+  debug_msg(1, $device->{device_id}, ': ', $device->{hostname}, ', OS: ', $device->{os}, ' ', $device->{status}, "\n");
   if ( $os->{ $device->{os} } ) {
     my $os_group = $os->{ $device->{os} }->{group};
     debug_msg(1, $os_group);
   }
+  my $newstatus = exists $device->{ping} && exists $device->{snmp_data};
   if ( exists $device->{ping} ) {
-    print " * ", $device->{ping}, "\n";
+    print " * ping: ", $device->{ping}, "\n";
+    if ( exists $device->{snmp_data} ) {
+      
+    }
+    else {
+      print " * Dead (SNMP)\n";
+    }
+  } else {
+    print " * Dead (ping)\n";
   }
-  else {
-    print " * Dead\n";
+  if ( $newstatus != $device->{status} ) {
+    print " # Status changed\n";
   }
   # Todo: make RRD here
   
