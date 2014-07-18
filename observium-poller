@@ -6,6 +6,7 @@ use Schema;
 use PHP::Serialization qw(unserialize);
 use Net::SNMP;
 use Net::SNMP::Util::OID qw(system* interfaces* at* ip* icmp* tcp* udp* egp* snmp* tcp*);
+use SNMP;
 use Getopt::Long;
 use Poller;
 use Utils;
@@ -40,8 +41,11 @@ debug_msg( 5, 'Config::Any: ', join(', ', Config::Any->plugins()), "\n", join(':
 
 my $config = $cfg->[0]->{ 'observium.yml' };
 my $os = $cfg->[1]->{ 'os.json' };
-use Data::Dumper;
-#print Dumper($cfg);
+
+if ( ref $config->{snmp}->{mibdir} eq 'ARRAY' and scalar @{ $config->{snmp}->{mibdir} } > 0 ) {
+  SNMP::addMibDirs(  @{ $config->{snmp}->{mibdir} } );
+}
+
 my $data = Schema->connect( join( ':', 'dbi', $config->{database}->{driver}, 'host='.$config->{database}->{host}.';dbname='.$config->{database}->{database} ),
 
 			    $config->{database}->{user}, $config->{database}->{password}, { lc($config->{database}->{drive}).'_enable_utf8' => 1, RaiseError => 1, AutoCommit => 1 });

@@ -10,5 +10,8 @@ network:
    timeout: 500
    retries: 3
    pings: 1
+snmp:
+   mibdir: 
+      - /usr/local/www/observium/mibs
 
 

@@ -10,7 +10,7 @@ has 'parent' => ( is => 'ro', isa => 'Object' );
 sub oids {
   my $self = shift;
   my ( $oids ) = shift;
-  return [ map { SNMP::translateObj( $_.'.0' ) } @$oids ];
+  return [ map { SNMP::translateObj( $_ ) } @$oids ];
 }
 
 sub request {
