@@ -11,16 +11,16 @@ sub process {
   $device->set_column( sysname => lc( $device->{snmp_data}->{ 'sysName.0' } ) );
   # Process uptime
   my $uptime = undef;
-  if ( $device->{snmp_data}->{'hrSystemUptime.0'} eq 'noSuchObject' ) {
+  if ( $device->{snmp_data}->{'hrSystemUptime.0'} =~ m/no.*such/i  ) {
     # Here should be MUCH more complicated calculations
     $uptime =  $device->{snmp_data}->{'snmpEngineTime.0'};
   } else {
     ...;
   }
-#  print "device ",$device->hostname," is up ", Utils::formatUptime($device->uptime), "\n";
+  #  print "device ",$device->hostname," is up ", Utils::formatUptime($device->uptime), "\n";
   if ( $uptime < $device->uptime ) {
     # Reboot
-#    print $device->hostname, ' rebooted after '.Utils::formatUptime($device->uptime), "\n";
+    #    print $device->hostname, ' rebooted after '.Utils::formatUptime($device->uptime), "\n";
     $device->log_event( 'Device rebooted after '.Utils::formatUptime($device->uptime), 'reboot', $device->uptime );
   }
   $device->uptime( $uptime );

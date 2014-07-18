@@ -64,15 +64,12 @@ sub _build_plugin_list {
     ### FIXME should have some Try::Tiny here, with a parameter to control
     ### what happens when a class doesn't load -- ignore, warn, die
     Class::Load::load_class( $plugin_lib );
-    print "$plugin_lib loaded\n";
     my $plugin = $plugin_lib->new({
       name   => $plugin_name ,
       parent => $self ,
     });
-    print "Object created\n";
     push @{ $plugin_list } , $plugin;
   }
-  print "Returning ", ref $plugin_list, "\n";
   return $plugin_list;
 };
 

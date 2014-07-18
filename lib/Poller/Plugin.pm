@@ -3,6 +3,8 @@ use Moose;
 use Net::SNMP::Util::OID qw(system* interfaces* at* ip* icmp* tcp* udp* egp* snmp* tcp*);
 use SNMP;
 use Data::Dumper;
+use Utils;
+
 has 'name' => ( is => 'ro', isa => 'Str' );
 has 'parent' => ( is => 'ro', isa => 'Object' );
 #has 'oids_get' => ( is => 'ro', reader => '_get_oids_get' );
@@ -28,12 +30,10 @@ sub request {
 
 sub snmp_get_callback {
   my ($self, $session, $device) = @_; 
-#  print "Callback ", $self->name, " for ", $device->hostname, "\n"; 
   my $list = $session->var_bind_list();
-#  print Dumper $list;
+  debug_msg(1, Dumper $list);
   map { $device->{snmp_data}->{ SNMP::translateObj( $_ ) } = $list->{$_} } keys %$list;
-#  print "SNMP data: ", Dumper $device->{snmp_data};
-
+  debug_msg(1,"SNMP data: ", Dumper $device->{snmp_data});
 }
 
 sub process {
