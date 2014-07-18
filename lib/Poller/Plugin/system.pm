@@ -1,6 +1,6 @@
 package Poller::Plugin::system;
 use Moose;
 extends 'Poller::Plugin';
-sub oids_get { [qw/sysUpTime sysLocation sysContact sysName sysDescr sysObjectID/] };
+sub oids_get { [qw/sysUpTime sysLocation sysContact sysName sysDescr sysObjectID hrSystemUptime/] };
 
 1;
