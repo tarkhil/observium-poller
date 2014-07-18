@@ -595,7 +595,7 @@ sub get_pollers {
 sub log_event {
   my $self = shift;
   my ( $text, $type, $reference ) = @_;
-  $self->create_related( 'eventlogs', { timestamp => DateTime->now, message => $text, type => $type, reference => $reference } );
+  $self->create_related( 'eventlogs', { timestamp => DateTime->now( time_zone => 'local' ), message => $text, type => $type, reference => $reference } );
 }
 
 1;
