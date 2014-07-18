@@ -527,6 +527,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 eventlogs
+
+Type: has_many
+
+Related object: L<Schema::Result::Eventlog>
+
+=cut
+
+__PACKAGE__->has_many(
+  "eventlogs",
+  "Schema::Result::Eventlog",
+  { "foreign.device_id" => "self.device_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 sensors
 
 Type: has_many
@@ -543,8 +558,10 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-17 20:47:54
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pEajENN+Dwvju2l9oWw5xA
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-18 15:13:50
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TwxnPK/BrGRmR0Kag2HU6Q
+
+use DateTime;
 
 =head1 ACCESS FUNCTIONS
 
@@ -571,8 +588,14 @@ sub get_pollers {
 		'not in' => $disabled->as_query()
 	       },
       },
-      { Select => [qw/name/] } );
+      { select => [qw/name/],
+	order_by => [qw/poller_id/] } );
 }
 
+sub log_event {
+  my $self = shift;
+  my ( $text, $type, $reference ) = @_;
+  $self->create_related( 'eventlogs', { timestamp => DateTime->now, message => $text, type => $type, reference => $reference } );
+}
 
 1;

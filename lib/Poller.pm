@@ -90,6 +90,13 @@ sub requests {
   map { $self->plugin_hash->{$_}->request( $device ); } $polls->get_column('name')->all();
 }
 
+sub process {
+  my ( $self, $device ) = @_;
+  my $polls = $device->get_pollers();
+  map { $self->plugin_hash->{$_}->process( $device ); } $polls->get_column('name')->all();
+}
+
+
 
 __PACKAGE__->meta->make_immutable;
 1;

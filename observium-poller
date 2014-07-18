@@ -156,3 +156,5 @@ foreach my $devname ( sort keys %$devlist ) {
 
 snmp_dispatcher();
 
+map { $poller->process( $devlist->{$_} ) && $devlist->{$_}->insert_or_update(); } sort keys %$devlist;
+

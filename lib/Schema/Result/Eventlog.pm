@@ -45,6 +45,7 @@ __PACKAGE__->table("eventlog");
 
   data_type: 'integer'
   default_value: 0
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 timestamp
@@ -76,7 +77,12 @@ __PACKAGE__->add_columns(
   "event_id",
   { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
   "device_id",
-  { data_type => "integer", default_value => 0, is_nullable => 0 },
+  {
+    data_type      => "integer",
+    default_value  => 0,
+    is_foreign_key => 1,
+    is_nullable    => 0,
+  },
   "timestamp",
   {
     data_type => "datetime",
@@ -103,9 +109,26 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("event_id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 11:23:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:faGsUlqMSYrW3kdaPkhsNw
+=head2 device
+
+Type: belongs_to
+
+Related object: L<Schema::Result::Device>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "device",
+  "Schema::Result::Device",
+  { device_id => "device_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-18 15:13:50
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B7IJ1uWhcb5DjVay9yCbZw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -15,10 +15,10 @@ sub oids {
 
 sub request {
   my ( $self, $device ) = @_;
-  print "Building ", $self->name, " request for ", $device->hostname, "\n";
+#  print "Building ", $self->name, " request for ", $device->hostname, "\n";
   my $oids_get = $self->oids_get( $device );
   if ( scalar @$oids_get > 0 ) {
-    print Dumper $self->oids( $oids_get );
+#    print Dumper $self->oids( $oids_get );
     $device->{snmp}->get_request(
 				 -varbindlist => $self->oids( $oids_get ),
 				 -callback => [ sub{ $self->snmp_get_callback(@_); }, $device ],
@@ -28,14 +28,18 @@ sub request {
 
 sub snmp_get_callback {
   my ($self, $session, $device) = @_; 
-  print "Callback ", $self->name, " for ", $device->hostname, "\n"; 
+#  print "Callback ", $self->name, " for ", $device->hostname, "\n"; 
   my $list = $session->var_bind_list();
-  print Dumper $list;
+#  print Dumper $list;
   map { $device->{snmp_data}->{ SNMP::translateObj( $_ ) } = $list->{$_} } keys %$list;
-  print "SNMP data: ", Dumper $device->{snmp_data};
+#  print "SNMP data: ", Dumper $device->{snmp_data};
 
 }
 
+sub process {
+  my ( $self, $device ) = @_;
+  return exists $device->{snmp_data};
+}
 
 __PACKAGE__->meta->make_immutable;
 1;
