@@ -46,12 +46,8 @@ my $data = Schema->connect( join( ':', 'dbi', $config->{database}->{driver}, 'ho
 
 			    $config->{database}->{user}, $config->{database}->{password}, { lc($config->{database}->{drive}).'_enable_utf8' => 1, RaiseError => 1, AutoCommit => 1 });
 
-my $devices = $data->resultset('Device')->search_rs( { disabled => 0 },
-						     { 
-						      select => [qw/device_id device_state hostname 
-								    os status community authlevel authname authpass
-								    authalgo cryptopass cryptoalgo snmpver port timeout retries/]
-						     } );
+my $devices = $data->resultset('Device')->search_rs( { disabled => 0 }, );
+
 if ( $hosts ne 'all' ) {
   # Do not support BETWEEN right now
   $devices = $devices->search_rs( { device_id => { -in => [ split/,/, $hosts ] } } );
@@ -152,5 +148,7 @@ foreach my $devname ( sort keys %$devlist ) {
     print " # Status changed\n";
   }
   # Todo: make RRD here
-  
 }
+
+snmp_dispatcher();
+

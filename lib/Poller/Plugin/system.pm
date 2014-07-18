@@ -1,10 +1,6 @@
 package Poller::Plugin::system;
 use Moose;
 extends 'Poller::Plugin';
-
-sub request {
-  my ( $self, $device ) = @_;
-  print "Building ", $self->name, " request for ", $device->hostname, "\n";
-}
+sub oids_get { [qw/sysUpTime sysLocation sysContact sysName sysDescr sysObjectID/] };
 
 1;
