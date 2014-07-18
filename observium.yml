@@ -13,5 +13,6 @@ network:
 snmp:
    mibdir: 
       - /usr/local/www/observium/mibs
+rrddir: /usr/local/www/observium/rrd
 
-
+  
