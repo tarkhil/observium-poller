@@ -581,7 +581,9 @@ sub get_pollers {
 				      {
 				       select => [ \"substr(attrib_type,6)" ],
 				      });
-  my $db_pollers = [ $self->result_source->schema->resultset('Poller')->search_rs
+  my $db_pollers;
+  if ( defined $main::modules ) {
+    $db_pollers = [ $self->result_source->schema->resultset('Poller')->search_rs
     ( {
        enabled => 1,
        name => {
@@ -591,6 +593,18 @@ sub get_pollers {
       { select => [qw/name/],
 	order_by => [qw/poller_id/] } )->get_column('name')->all(),
 		   split(/:/, $main::modules) ];
+  } 
+  else {
+    $db_pollers = [ $self->result_source->schema->resultset('Poller')->search_rs
+    ( {
+       enabled => 1,
+       name => {
+		'not in' => $disabled->as_query()
+	       },
+      },
+      { select => [qw/name/],
+	order_by => [qw/poller_id/] } )->get_column('name')->all() ];
+  }
 }
 
 sub log_event {
