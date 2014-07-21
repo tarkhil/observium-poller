@@ -6,7 +6,6 @@ has poller_object => ( is => 'rw', isa => 'Ref' );
 
 sub oids_get { 
   my $self = shift;
-  print "Getting oids\n";
   my ( $device ) = @_;
   my $os = $device->os;
   my $class = ref $self;
