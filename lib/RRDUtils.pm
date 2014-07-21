@@ -1,6 +1,7 @@
 package RRDUtils;
 use Exporter;
 use RRDs;
+use Utils;
 
 @EXPORT = qw( InitRRD UpdateRRD );
 
@@ -14,6 +15,7 @@ sub InitRRD {
 
 sub UpdateRRD {
   my ( $path, $file, $value ) = @_;
+  debug_msg(2, "Updating ", $path.'/'.$file, " with ", $value, "\n");
   RRDs::update( $path.'/'.$file, $value );
   return 1;
 }

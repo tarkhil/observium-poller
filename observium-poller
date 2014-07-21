@@ -27,7 +27,7 @@ sub snmp_get_cb {
   return;
 }
 
-our $cfg = Config::Any->load_files( { files => [ "$FindBin::Bin/observium.yml", "$FindBin::Bin/os.json" ], use_ext => 1  } );
+our $cfg = Config::Any->load_files( { files => [ $FindBin::Bin."/observium.yml", $FindBin::Bin."/os.json" ], use_ext => 1  } );
 
 our ($hosts, $debug, $norrd, $quiet) = ( '', 0, 0, 0 );
 
@@ -42,9 +42,9 @@ if ( !$result || $hosts le '' ) {
   usage();
 }
 debug_msg( 5, 'Config::Any: ', join(', ', Config::Any->plugins()), "\n", join(':',Config::Any->extensions()), "\n" );
-
-my $config = $cfg->[0]->{ 'observium.yml' };
-my $os = $cfg->[1]->{ 'os.json' };
+debug_msg( 4, Dumper $cfg );
+my $config = $cfg->[0]->{ $FindBin::Bin.'/observium.yml' };
+my $os = $cfg->[1]->{ $FindBin::Bin.'/os.json' };
 
 if ( ref $config->{snmp}->{mibdir} eq 'ARRAY' and scalar @{ $config->{snmp}->{mibdir} } > 0 ) {
   SNMP::addMibDirs(  @{ $config->{snmp}->{mibdir} } );
