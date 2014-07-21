@@ -14,6 +14,7 @@ use Config::Any;
 use Regexp::Common qw/net/;
 use RRDUtils;
 use Time::HiRes qw/gettimeofday tv_interval/;
+use DateTime;
 
 use Data::Dumper;
 sub snmp_get_cb {
@@ -24,6 +25,8 @@ sub snmp_get_cb {
   $list = $session->var_bind_list();
 #  print "List is: ", Dumper $list;
   $device->{snmp_data} = $list;
+  $device->last_polled(  DateTime->now( time_zone => 'local' ) );
+  # Device poll time is not applicable since we're polling them all at once
   return;
 }
 
