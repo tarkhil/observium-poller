@@ -27,7 +27,7 @@ sub snmp_get_cb {
   return;
 }
 
-our $cfg = Config::Any->load_files( { files => [ "observium.yml", "os.json" ], use_ext => 1  } );
+our $cfg = Config::Any->load_files( { files => [ "$FindBin::Bin/observium.yml", "$FindBin::Bin/os.json" ], use_ext => 1  } );
 
 our ($hosts, $debug, $norrd, $quiet) = ( '', 0, 0, 0 );
 
