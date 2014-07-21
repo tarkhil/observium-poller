@@ -75,7 +75,11 @@ sub _build_plugin_list {
 
 sub BUILD {
   my $self = shift;
-  $self->plugins( [ $self->schema->resultset('Poller')->search( { enabled => 1 } )->get_column( 'name' )->all(), split(/:/, $main::modules) ] );
+  if ( defined $main::modules ) {
+    $self->plugins( [ $self->schema->resultset('Poller')->search( { enabled => 1 } )->get_column( 'name' )->all(), split(/:/, $main::modules) ] );
+  } else {
+    $self->plugins( [ $self->schema->resultset('Poller')->search( { enabled => 1 } )->get_column( 'name' )->all() ] );
+  }
   # Force loading here, to crash early in case of any problems
   $self->plugin_list();
   return 1;
