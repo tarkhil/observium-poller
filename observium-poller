@@ -156,20 +156,20 @@ foreach my $devname ( sort keys %$devlist ) {
   my $newstatus = exists $device->{ping} && exists $device->{snmp_data};
   my $rrdpath =  $config->{rrddir}.'/'.$device->hostname;
   if ( exists $device->{ping} ) {
-#    print " * ping: ", $device->{ping}, "\n";
+    debug_msg(1," * ping: ", $device->{ping}, "\n");
     RRDUtils::UpdateRRD( $rrdpath, 'ping.rrd', 'N:'.$device->{ping} );
     if ( exists $device->{snmp_data} ) {
-#      print " Going to add SNMP according to tables\n";
+      debug_msg(1," Going to add SNMP according to tables\n");
       RRDUtils::UpdateRRD( $rrdpath, 'ping_snmp.rrd', 'N:'.$device->{snmp_elapsed} );
       $poller->requests( $device );
     }
     else {
-#      print " * Dead (SNMP)\n";
+      debug_msg(1, " * Dead (SNMP)\n");
       $status_type = '(snmp)';
       RRDUtils::UpdateRRD( $rrdpath, 'ping_snmp.rrd', 'N:U' );
     }
   } else {
-#    print " * Dead (ping)\n";
+    debug_msg(1, " * Dead (ping)\n");
     $status_type = '(ping)';
     RRDUtils::UpdateRRD( $rrdpath, 'ping.rrd', 'N:U' );
     RRDUtils::UpdateRRD( $rrdpath, 'ping_snmp.rrd', 'N:U' );

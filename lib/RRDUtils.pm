@@ -7,6 +7,7 @@ use RRDs;
 sub InitRRD {
   my ( $path, $file, $initstr ) = @_;
   return 1 if -f $path.'/'.$file;
+  print "Creating  $path/$file\n";
   RRDs::create( $path.'/'.$file, $initstr );
   return 1;
 }
