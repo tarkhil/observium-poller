@@ -19,8 +19,7 @@ sub request {
   my ( $self, $device ) = @_;
 #  print "Building ", $self->name, " request for ", $device->hostname, "\n";
   my $oids_get = $self->oids_get( $device );
-  if ( scalar @$oids_get > 0 ) {
-#    print Dumper $self->oids( $oids_get );
+  if ( defined($oids_get) && (scalar @$oids_get > 0) ) {
     $device->{snmp}->get_request(
 				 -varbindlist => $self->oids( $oids_get ),
 				 -callback => [ sub{ $self->snmp_get_callback(@_); }, $device ],

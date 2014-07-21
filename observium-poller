@@ -32,9 +32,9 @@ sub snmp_get_cb {
 
 our $cfg = Config::Any->load_files( { files => [ $FindBin::Bin."/observium.yml", $FindBin::Bin."/os.json" ], use_ext => 1  } );
 
-our ($hosts, $debug, $norrd, $quiet) = ( '', 0, 0, 0 );
+our ($hosts, $debug, $norrd, $quiet, $modules) = ( '', 0, 0, 0, undef );
 
-my $result = GetOptions ( 'hosts=s' => \$hosts, 'debug=i' => \$debug, 'norrd' => \$norrd, 'quiet' => \$quiet );
+my $result = GetOptions ( 'hosts=s' => \$hosts, 'debug=i' => \$debug, 'norrd' => \$norrd, 'quiet' => \$quiet, 'modules=s' => \$modules );
 
 sub usage {
   print STDERR 'Usage: observium-poller --hosts=[all|numbers] --debug=debug_level --norrd --quiet', "\n";
@@ -154,7 +154,7 @@ foreach my $devname ( sort keys %$devlist ) {
   debug_msg(1, $device->device_id, ': ', $device->hostname, ', OS: ', $device->os, ' ', $device->status, "\n");
   if ( $os->{ $device->os } ) {
     my $os_group = $os->{ $device->os }->{group};
-    debug_msg(1, $os_group);
+    $device->{os_group} = $os_group;
   }
   my $newstatus = exists $device->{ping} && exists $device->{snmp_data};
   my $rrdpath =  $config->{rrddir}.'/'.$device->hostname;

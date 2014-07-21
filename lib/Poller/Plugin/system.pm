@@ -1,6 +1,7 @@
 package Poller::Plugin::system;
 use Moose;
 extends 'Poller::Plugin';
+use SNMP;
 sub oids_get { [qw/sysUpTime.0 sysLocation.0 sysContact.0 sysName.0 sysDescr.0 sysObjectID.0 hrSystemUptime.0 snmpEngineTime.0/] };
 use Utils;
 

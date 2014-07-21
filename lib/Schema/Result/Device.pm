@@ -581,7 +581,7 @@ sub get_pollers {
 				      {
 				       select => [ \"substr(attrib_type,6)" ],
 				      });
-  return $self->result_source->schema->resultset('Poller')->search_rs
+  my $db_pollers = [ $self->result_source->schema->resultset('Poller')->search_rs
     ( {
        enabled => 1,
        name => {
@@ -589,7 +589,8 @@ sub get_pollers {
 	       },
       },
       { select => [qw/name/],
-	order_by => [qw/poller_id/] } );
+	order_by => [qw/poller_id/] } )->get_column('name')->all(),
+		   split(/:/, $main::modules) ];
 }
 
 sub log_event {

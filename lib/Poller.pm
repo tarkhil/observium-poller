@@ -75,7 +75,7 @@ sub _build_plugin_list {
 
 sub BUILD {
   my $self = shift;
-  $self->plugins( [ $self->schema->resultset('Poller')->search( { enabled => 1 } )->get_column( 'name' )->all() ] );
+  $self->plugins( [ $self->schema->resultset('Poller')->search( { enabled => 1 } )->get_column( 'name' )->all(), split(/:/, $main::modules) ] );
   # Force loading here, to crash early in case of any problems
   $self->plugin_list();
   return 1;
@@ -84,13 +84,13 @@ sub BUILD {
 sub requests {
   my ( $self, $device ) = @_;
   my $polls = $device->get_pollers();
-  map { $self->plugin_hash->{$_}->request( $device ); } $polls->get_column('name')->all();
+  map { $self->plugin_hash->{$_}->request( $device ); } @$polls;
 }
 
 sub process {
   my ( $self, $device ) = @_;
   my $polls = $device->get_pollers();
-  map { $self->plugin_hash->{$_}->process( $device ); } $polls->get_column('name')->all();
+  map { $self->plugin_hash->{$_}->process( $device ); } @$polls;
 }
 
 

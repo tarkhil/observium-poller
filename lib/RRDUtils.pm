@@ -7,6 +7,7 @@ use Utils;
 
 sub InitRRD {
   my ( $path, $file, $initstr ) = @_;
+  return 1 if $main::norrd;
   return 1 if -f $path.'/'.$file;
   print "Creating  $path/$file\n";
   RRDs::create( $path.'/'.$file, $initstr );
@@ -15,6 +16,7 @@ sub InitRRD {
 
 sub UpdateRRD {
   my ( $path, $file, $value ) = @_;
+  return 1 if $main::norrd;
   debug_msg(2, "Updating ", $path.'/'.$file, " with ", $value, "\n");
   RRDs::update( $path.'/'.$file, $value );
   return 1;
