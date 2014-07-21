@@ -29,7 +29,8 @@ sub snmp_get_cb {
   # Device poll time is not applicable since we're polling them all at once
   return;
 }
-
+my $poller_start = [ gettimeofday ];
+my $start_time = DateTime->now( time_zone => 'local' );
 our $cfg = Config::Any->load_files( { files => [ $FindBin::Bin."/observium.yml", $FindBin::Bin."/os.json" ], use_ext => 1  } );
 
 our ($hosts, $debug, $norrd, $quiet, $modules) = ( '', 0, 0, 0, undef );
@@ -189,5 +190,19 @@ foreach my $devname ( sort keys %$devlist ) {
 
 snmp_dispatcher();
 
-map { eval { $poller->process( $devlist->{$_} ) && $devlist->{$_}->insert_or_update(); } } sort keys %$devlist;
+my $polled_time;
+map { eval { 
+  my $devname = $_;
+  $poller->process( $devlist->{$devname} );
+  $polled_time = tv_interval( $poller_start, [ gettimeofday ] );
+  $devlist->{$devname}->last_polled_timetaken( $polled_time );
+  RRDUtils::UpdateRRD( $config->{rrddir}.'/'.$devname , 'perf-poller.rrd', 'N:'.$polled_time );
+  $devlist->{$devname}->insert_or_update(); 
+} } sort keys %$devlist;
 
+$data->resultset('PerfTime')->new( { type => 'poll', 
+				     start => $start_time,
+				     duration => $polled_time,
+				     devices => scalar(keys(%$devlist)),
+				     doing => $hosts,
+				   } )->insert_or_update();
