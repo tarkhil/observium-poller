@@ -10,7 +10,6 @@ sub oids_get { [ qw/entPhysicalModelName.1 entPhysicalContainedIn.1 entPhysicalN
 
 sub process {
   my ($self, $device) = @_;
-#  print $device->{snmp_data}->{'sysObjectID.0'}, " => ",  SNMP::translateObj($device->{snmp_data}->{'sysObjectID.0'}), "\n";
   $device->{snmp_data}->{'sysObjectID.0'} =  SNMP::translateObj($device->{snmp_data}->{'sysObjectID.0'});
   return 1;
 }

@@ -603,6 +603,9 @@ Get all active pollers for device
 
 sub get_pollers {
   my $self = shift;
+  # NOT DAEMON SAFE
+  # In case of daemonization, REWRITE 
+  return $self->{pollers} if defined $self->{pollers};
   my $disabled = $self->search_related( 'devices_attribs', 
 				       {
 					attrib_value => 0,
@@ -635,6 +638,8 @@ sub get_pollers {
       { select => [qw/name/],
 	order_by => [qw/poller_id/] } )->get_column('name')->all() ];
   }
+  $self->{pollers} = $db_pollers;
+  return $self->{pollers};
 }
 
 sub log_event {
@@ -654,6 +659,14 @@ sub get_processors {
   my $self = shift;
   my ( $fields ) = @_;
   my $procs = $self->search_related( 'processors' );
+  $procs = $procs->search( undef, { select => $fields } ) if defined $fields && ref($fields) eq 'ARRAY';
+  return $procs;
+}
+
+sub get_mempools {
+  my $self = shift;
+  my ( $fields ) = @_;
+  my $procs = $self->search_related( 'mempools' );
   $procs = $procs->search( undef, { select => $fields } ) if defined $fields && ref($fields) eq 'ARRAY';
   return $procs;
 }
