@@ -38,6 +38,8 @@ sub process {
     $proc->processor_precision( 1 ) unless defined $proc->processor_precision;
     my $load = sprintf( '%.2f', $device->{snmp_data}->{ $proc->processor_oid_name } / $proc->processor_precision );
     RRDUtils::UpdateRRD( $main::config->{rrddir}, $procrrd, "N:".$load );
+    # Update that crazy database as well
+    $proc->update_or_create_related( 'state', { processor_polled => time, processor_usage => $load } );
   }
   return 1;
 }
