@@ -16,6 +16,7 @@ sub process {
     # Here should be MUCH more complicated calculations
     $uptime =  $device->{snmp_data}->{'snmpEngineTime.0'};
   } else {
+    print "Device ", $device->device_id, " returns system uptime: ",  $device->{snmp_data}->{'hrSystemUptime.0'}, "\n";
     ...;
   }
   #  print "device ",$device->hostname," is up ", Utils::formatUptime($device->uptime), "\n";

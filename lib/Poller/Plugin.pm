@@ -30,10 +30,14 @@ sub request {
 
 sub snmp_get_callback {
   my ($self, $session, $device) = @_; 
+  debug_msg(3, Dumper $session );
+  if ( $session->error() ) {
+    $device->{snmp_error} = $session->error();
+  }
   my $list = $session->var_bind_list();
-  debug_msg(1, Dumper $list);
+  debug_msg(2, Dumper $list);
   map { $device->{snmp_data}->{ SNMP::translateObj( $_ ) } = $list->{$_} } keys %$list;
-  debug_msg(1,"SNMP data: ", Dumper $device->{snmp_data});
+  debug_msg(2,"SNMP data: ", Dumper $device->{snmp_data});
 }
 
 sub process {

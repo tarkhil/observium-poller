@@ -93,8 +93,13 @@ sub requests {
 
 sub process {
   my ( $self, $device ) = @_;
+  if ( exists $device->{snmp_error} ) {
+    print "Device ", $device->device_id, " (", $device->hostname, ") got error: ", $device->{snmp_error}, "\n";
+    return 0;
+  }
   my $polls = $device->get_pollers();
   map { $self->plugin_hash->{$_}->process( $device ); } @$polls;
+  return 1;
 }
 
 
