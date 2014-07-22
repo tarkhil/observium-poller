@@ -54,6 +54,7 @@ __PACKAGE__->table("processors");
 =head2 device_id
 
   data_type: 'integer'
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 processor_oid
@@ -96,7 +97,7 @@ __PACKAGE__->add_columns(
   "hrdeviceindex",
   { data_type => "integer", is_nullable => 1 },
   "device_id",
-  { data_type => "integer", is_nullable => 0 },
+  { data_type => "integer", is_foreign_key => 1, is_nullable => 0 },
   "processor_oid",
   { data_type => "varchar", is_nullable => 0, size => 128 },
   "processor_index",
@@ -121,10 +122,49 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("processor_id");
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 11:23:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8TnXDq6QjdZRF0iqnnPYHA
+=head2 device
+
+Type: belongs_to
+
+Related object: L<Schema::Result::Device>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "device",
+  "Schema::Result::Device",
+  { device_id => "device_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
 
 
-# You can replace this text with custom code or comments, and it will be preserved on regeneration
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-22 14:25:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:p5POsd2mbrEqzvpD2wQ0kw
+use Utils;
+__PACKAGE__->might_have( state => 'Schema::Result::ProcessorsState', 'processor_id' );
+
+sub processor_oid_name {
+  my $self = shift;
+  my ( $value ) = @_;
+  if ( defined $value ) {
+    ...;
+  }
+  else {
+    return Utils::translateToName( $self->processor_oid );
+  }
+}
+
+sub processor_oid_oid {
+  my $self = shift;
+  my ( $value ) = @_;
+  if ( defined $value ) {
+    ...;
+  }
+  else {
+    return Utils::translateToOid( $self->processor_oid );
+  }
+}
+
 1;

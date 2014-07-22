@@ -12,7 +12,7 @@ has 'parent' => ( is => 'ro', isa => 'Object' );
 sub oids {
   my $self = shift;
   my ( $oids ) = shift;
-  return [ map { SNMP::translateObj( $_ ) } @$oids ];
+  return [ map { Utils::translateToOid( $_ ) } @$oids ];
 }
 
 sub request {
@@ -20,6 +20,7 @@ sub request {
 #  print "Building ", $self->name, " request for ", $device->hostname, "\n";
   my $oids_get = $self->oids_get( $device );
   if ( defined($oids_get) && (scalar @$oids_get > 0) ) {
+    debug_msg(2, Dumper $oids_get );
     $device->{snmp}->get_request(
 				 -varbindlist => $self->oids( $oids_get ),
 				 -callback => [ sub{ $self->snmp_get_callback(@_); }, $device ],

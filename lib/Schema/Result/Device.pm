@@ -542,6 +542,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 processors
+
+Type: has_many
+
+Related object: L<Schema::Result::Processor>
+
+=cut
+
+__PACKAGE__->has_many(
+  "processors",
+  "Schema::Result::Processor",
+  { "foreign.device_id" => "self.device_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 sensors
 
 Type: has_many
@@ -558,8 +573,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-18 15:13:50
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TwxnPK/BrGRmR0Kag2HU6Q
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-22 14:25:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zle+u9kdKRC8zeBLJgBwRA
 
 use DateTime;
 
@@ -611,6 +626,21 @@ sub log_event {
   my $self = shift;
   my ( $text, $type, $reference ) = @_;
   $self->create_related( 'eventlogs', { timestamp => DateTime->now( time_zone => 'local' ), message => $text, type => $type, reference => $reference } );
+}
+
+sub get_sensors {
+  my $self = shift;
+  my ( $poller_type ) = @_;
+  return $self->search_related( 'sensors', { poller_type => $poller_type, sensor_deleted => 0 },
+				{ order_by => [qw/sensor_type/] } );
+}
+
+sub get_processors {
+  my $self = shift;
+  my ( $fields ) = @_;
+  my $procs = $self->search_related( 'processors' );
+  $procs = $procs->search( undef, { select => $fields } ) if defined $fields && ref($fields) eq 'ARRAY';
+  return $procs;
 }
 
 1;

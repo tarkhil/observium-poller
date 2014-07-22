@@ -3,7 +3,7 @@ use base qw/Exporter/;
 @EXPORT    = qw( EX_OK EX_USAGE EX_DATAERR EX_NOINPUT EX_NOUSER EX_NOHOST 
 		 EX_UNAVAILABLE EX_SOFTWARE EX_OSERR  EX_OSFILE EX_CANTCREAT 
 		 EX_IOERR EX_TEMPFAIL EX_PROTOCOL  EX_NOPERM  EX_CONFIG 
-		 debug_msg fix_snmpver format_time);
+		 debug_msg format_time safename);
 
 sub EX_OK () {0;}
 sub EX__BASE () {64;}
@@ -133,6 +133,32 @@ sub snmp_cb {
   # }
   
   return;
+}
+
+sub safename {
+  my $text = shift;
+  $text =~ s/[^a-zA-Z0-9,._\-]/_/g;
+  return $text;
+}
+
+sub translateToOid {
+  my $oid = shift;
+  if ( $oid =~ /^[0-9\.]+$/ ) {
+    return $oid;
+  }
+  else {
+    return SNMP::translateObj( $oid );
+  }
+}
+
+sub translateToName {
+  my $oid = shift;
+  if ( $oid =~ /^[0-9\.]+$/ ) {
+    return SNMP::translateObj( $oid );
+  }
+  else {
+    return $oid;
+  }
 }
 
 1;

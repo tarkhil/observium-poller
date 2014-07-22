@@ -47,7 +47,7 @@ if ( !$result || $hosts le '' ) {
 }
 debug_msg( 5, 'Config::Any: ', join(', ', Config::Any->plugins()), "\n", join(':',Config::Any->extensions()), "\n" );
 debug_msg( 4, Dumper $cfg );
-my $config = $cfg->[0]->{ $FindBin::Bin.'/observium.yml' };
+our $config = $cfg->[0]->{ $FindBin::Bin.'/observium.yml' };
 my $os = $cfg->[1]->{ $FindBin::Bin.'/os.json' };
 
 if ( ref $config->{snmp}->{mibdir} eq 'ARRAY' and scalar @{ $config->{snmp}->{mibdir} } > 0 ) {
@@ -190,7 +190,7 @@ foreach my $devname ( sort keys %$devlist ) {
 
 snmp_dispatcher();
 
-my $polled_time;
+my $polled_time = tv_interval( $poller_start, [ gettimeofday ] );;
 map { eval { 
   my $devname = $_;
   $poller->process( $devlist->{$devname} );
@@ -198,7 +198,8 @@ map { eval {
   $devlist->{$devname}->last_polled_timetaken( $polled_time );
   RRDUtils::UpdateRRD( $config->{rrddir}.'/'.$devname , 'perf-poller.rrd', 'N:'.$polled_time );
   $devlist->{$devname}->insert_or_update(); 
-} } sort keys %$devlist;
+};
+      print "Error evaling $_: $@\n" if $@;} sort keys %$devlist;
 
 $data->resultset('PerfTime')->new( { type => 'poll', 
 				     start => $start_time,
