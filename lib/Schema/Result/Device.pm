@@ -542,6 +542,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 mempools
+
+Type: has_many
+
+Related object: L<Schema::Result::Mempool>
+
+=cut
+
+__PACKAGE__->has_many(
+  "mempools",
+  "Schema::Result::Mempool",
+  { "foreign.device_id" => "self.device_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 processors
 
 Type: has_many
@@ -573,8 +588,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-22 14:25:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zle+u9kdKRC8zeBLJgBwRA
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-22 17:38:12
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WbI+bE36SlADN2VZzKa1iQ
 
 use DateTime;
 

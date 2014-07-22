@@ -36,7 +36,7 @@ sub process {
     RRDUtils::InitRRD ($main::config->{rrddir}, $procrrd, " \
      DS:usage:GAUGE:600:-273:1000 ");
     $proc->processor_precision( 1 ) unless defined $proc->processor_precision;
-    my $load = sprintf( '%.2f', $device->{snmp_data}->{ $proc->processor_oid_name } / $proc->processor_precision );
+    my $load = sprintf( '%.2f', $device->{snmp_data}->{ Utils::translateToName( $proc->processor_oid ) } / $proc->processor_precision );
     RRDUtils::UpdateRRD( $main::config->{rrddir}, $procrrd, "N:".$load );
     # Update that crazy database as well
     $proc->update_or_create_related( 'state', { processor_polled => time, processor_usage => $load } );
