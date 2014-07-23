@@ -115,7 +115,7 @@ while ( ($try++ < $config->{network}->{retries}) && scalar(keys(%$pinglist)) > 0
 					      -privprotocol => $device->cryptoalgo,
 					      -privpassword => $device->cryptopass,
 					      -port => $device->port, -timeout => $device->timeout||3,
-					      -retries => $device->retries||1,
+					      -retries => $device->retries||$config->{snmp}->{retries},
 					      -nonblocking => 1,
 					     );
       if ( !defined $snmp ) {
@@ -187,8 +187,9 @@ foreach my $devname ( sort keys %$devlist ) {
   $device->status( $newstatus );
 
 }
-
+debug_msg(1, "Starting SNMP dispatcher\n");
 snmp_dispatcher();
+debug_msg(1, "Ended SNMP dispatcher\n");
 
 my $polled_time = tv_interval( $poller_start, [ gettimeofday ] );;
 map { eval { 
