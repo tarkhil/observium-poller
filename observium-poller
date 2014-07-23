@@ -153,8 +153,8 @@ my $status_type = '(snmp)';
 foreach my $devname ( sort keys %$devlist ) {
   my $device = $devlist->{$devname};
   debug_msg(1, $device->device_id, ': ', $device->hostname, ', OS: ', $device->os, ' ', $device->status, "\n");
-  if ( $os->{ $device->os } ) {
-    my $os_group = $os->{ $device->os }->{group};
+  if ( $os->{os}->{ $device->os } ) {
+    my $os_group = $os->{os}->{ $device->os }->{group};
     $device->{os_group} = $os_group;
   }
   my $newstatus = exists $device->{ping} && exists $device->{snmp_data};
