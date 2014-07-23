@@ -19,11 +19,10 @@ use DateTime;
 use Data::Dumper;
 sub snmp_get_cb {
   my ( $session, $device ) = @_;
-#  print "Running Callback\n";
   $device->{snmp_elapsed} = tv_interval( $device->{snmp_start}, [ gettimeofday ] );
   my $list;
   $list = $session->var_bind_list();
-#  print "List is: ", Dumper $list;
+  print "List is: ", Dumper $list;
   $device->{snmp_data} = $list;
   $device->last_polled(  DateTime->now( time_zone => 'local' ) );
   # Device poll time is not applicable since we're polling them all at once
@@ -66,6 +65,7 @@ if ( $hosts ne 'all' ) {
 }
 
 my $devlist = { map +( $_->hostname => $_ ), $devices->all() };
+
 #print Dumper $devlist;
 # First of all: fping them
 my $pinglist = {  map { +"$_" => 0 } keys %$devlist };
@@ -143,8 +143,8 @@ foreach ( @$snmplist ) {
     delete $devlist->{$_}->{snmp};
   }
 }
-#print "Starting dispatcher\n";
-map { $devlist->{$_}->{snmp_start} = [ gettimeofday ]; } @$snmplist;
+debug_msg(1, "Starting dispatcher\n");
+
 snmp_dispatcher();
 
 my $poller = new Poller( schema => $data );
