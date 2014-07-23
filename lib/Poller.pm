@@ -90,7 +90,7 @@ sub requests {
   my $polls = $device->get_pollers();
   if ( exists $device->{snmp_error} ) {
     print "Device ", $device->device_id, " (", $device->hostname, ") got error: ", $device->{snmp_error}, "\n";
-    return 0;
+#    return 0;
   }
   map { $self->plugin_hash->{$_}->request( $device ); } @$polls;
 }
