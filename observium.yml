@@ -8,11 +8,15 @@ database:
 network:
    fping: /usr/local/sbin/fping
    timeout: 500
-   retries: 3
+   retries: 1
    pings: 1
 snmp:
    mibdir: 
       - /usr/local/www/observium/mibs
+   retries: 4
+etherlike_extended: 0
+adsl_enable: 1
+poe_enable: 0
 rrddir: /usr/local/www/observium/rrd
 
   
