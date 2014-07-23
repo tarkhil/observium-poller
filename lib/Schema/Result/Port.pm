@@ -45,6 +45,7 @@ __PACKAGE__->table("ports");
 
   data_type: 'integer'
   default_value: 0
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 port_64bit
@@ -289,7 +290,12 @@ __PACKAGE__->add_columns(
   "port_id",
   { data_type => "integer", is_auto_increment => 1, is_nullable => 0 },
   "device_id",
-  { data_type => "integer", default_value => 0, is_nullable => 0 },
+  {
+    data_type      => "integer",
+    default_value  => 0,
+    is_foreign_key => 1,
+    is_nullable    => 0,
+  },
   "port_64bit",
   { data_type => "tinyint", is_nullable => 1 },
   "port_label",
@@ -407,10 +413,26 @@ __PACKAGE__->set_primary_key("port_id");
 
 __PACKAGE__->add_unique_constraint("device_ifIndex", ["device_id", "ifindex"]);
 
+=head1 RELATIONS
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 11:23:31
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:e9zPXo5KQkBZNhMAkf7/Xg
+=head2 device
+
+Type: belongs_to
+
+Related object: L<Schema::Result::Device>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "device",
+  "Schema::Result::Device",
+  { device_id => "device_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
 
 
-# You can replace this text with custom code or comments, and it will be preserved on regeneration
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-23 16:19:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u3Ws7ypPABROb3qm5d05+w
+__PACKAGE__->might_have( state => 'Schema::Result::PortsState', 'port_id' );
+
 1;

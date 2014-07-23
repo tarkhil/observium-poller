@@ -263,7 +263,7 @@ __PACKAGE__->set_primary_key("port_id");
 
 # Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-16 11:23:31
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iKsgNKSZ2qt3k5veWYPzDw
+__PACKAGE__->belongs_to( port => 'Schema::Result::Port', 
+			 'port_id' );
 
-
-# You can replace this text with custom code or comments, and it will be preserved on regeneration
 1;

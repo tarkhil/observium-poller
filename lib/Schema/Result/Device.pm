@@ -557,6 +557,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 ports
+
+Type: has_many
+
+Related object: L<Schema::Result::Port>
+
+=cut
+
+__PACKAGE__->has_many(
+  "ports",
+  "Schema::Result::Port",
+  { "foreign.device_id" => "self.device_id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 processors
 
 Type: has_many
@@ -588,8 +603,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-22 17:38:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WbI+bE36SlADN2VZzKa1iQ
+# Created by DBIx::Class::Schema::Loader v0.07039 @ 2014-07-23 16:19:21
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:peU6szzd41gnYSK8Q+TbSw
 
 use DateTime;
 
@@ -669,6 +684,25 @@ sub get_mempools {
   my $procs = $self->search_related( 'mempools' );
   $procs = $procs->search( undef, { select => $fields } ) if defined $fields && ref($fields) eq 'ARRAY';
   return $procs;
+}
+sub get_ports {
+  my $self = shift;
+  return $self->search_related( 'ports' );
+}
+
+sub find_port {
+  my ( $self, $ifindex ) = @_;
+  return $self->ports->find( { ifindex => $ifindex } );
+}
+
+sub count_ports {
+  my $self = shift;
+  my ( $type ) = @_;
+  my $ports = $self->search_related( 'ports' );
+  if ( defined $type ) {
+    $ports = $ports->search( { iftype => $type } );
+  }
+  return $ports->count();
 }
 
 1;
