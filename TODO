@@ -1,4 +1,4 @@
-1. Поддержать SNMPv2
-2. Поддержать device_state
-3. Нормальная обработка отсутствия ответа по SNMP
-4. Переделать полностью отладочные сообщения (Log4Perl?)
+1. Support SNMPv2
+2. Support device_state
+3. Handle SNMP timeouts - seems to be done
+4. Rework debuggimg messages (Log4Perl?)
