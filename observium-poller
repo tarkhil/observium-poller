@@ -22,7 +22,6 @@ sub snmp_get_cb {
   $device->{snmp_elapsed} = tv_interval( $device->{snmp_start}, [ gettimeofday ] );
   my $list;
   $list = $session->var_bind_list();
-  print "List is: ", Dumper $list;
   $device->{snmp_data} = $list;
   $device->last_polled(  DateTime->now( time_zone => 'local' ) );
   # Device poll time is not applicable since we're polling them all at once
@@ -144,7 +143,7 @@ foreach ( @$snmplist ) {
   }
 }
 debug_msg(1, "Starting dispatcher\n");
-
+map { $devlist->{$_}->{snmp_start} = [ gettimeofday ]; } @$snmplist;
 snmp_dispatcher();
 
 my $poller = new Poller( schema => $data );
