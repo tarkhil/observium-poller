@@ -435,4 +435,15 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u3Ws7ypPABROb3qm5d05+w
 __PACKAGE__->might_have( state => 'Schema::Result::PortsState', 'port_id' );
 
+sub log_event {
+  my $self = shift;
+  my ( $text, $type ) = @_;
+  return $self->device->log_event( $text, $type, $self->port_id );
+}
+
+sub get_state {
+  my $self = shift;
+  return $self->find_or_create_related( 'state', {}, [ $self->port_id ] );
+}
+
 1;

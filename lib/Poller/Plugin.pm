@@ -18,7 +18,7 @@ sub oids {
 
 sub request {
   my ( $self, $device ) = @_;
-  debug_msg(1, 'Requesting ', $device->hostname, "\n" );
+  debug_msg(1, 'Requesting ', $self->name, ' for ', $device->hostname, "\n" );
 #  print "Building ", $self->name, " request for ", $device->hostname, "\n";
   if ( $self->can( 'oids_get' )  ) {
     my $oids_get = $self->oids_get( $device );
@@ -107,7 +107,7 @@ sub store_data {
 
 sub process {
   my ( $self, $device ) = @_;
-  debug_msg(1, "Processing ", $device->hostname, "\n");
+  debug_msg(1, "Processing ", $self->name, ' for ',$device->hostname, "\n");
   return exists $device->{snmp_data};
 }
 

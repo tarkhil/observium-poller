@@ -695,6 +695,17 @@ sub find_port {
   return $self->ports->find( { ifindex => $ifindex } );
 }
 
+sub create_port {
+  my ( $self, $port ) = @_;
+  return $self->create_related( 'ports', {
+				       map +( lc($_) => $port->{$_}  ), 
+				       # Intersect arrays from stackoverflow.com
+				       grep { defined }
+				       @{ { map { lc ,=> $_ } sort keys %$port } }
+				       { map { lc } $self->related_resultset('ports')->result_source->columns }
+				      } );
+}
+
 sub count_ports {
   my $self = shift;
   my ( $type ) = @_;
