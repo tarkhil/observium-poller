@@ -22,4 +22,10 @@ sub UpdateRRD {
   return 1;
 }
 
+sub UpdateRRDMap {
+  my ( $path, $file, $data ) = @_;
+  return 1 if $main::norrd;
+  my $rrdline = join(':', 'N', map { defined($_)?$_:'U' } @$data);
+  UpdateRRD( $path, $file, $rrdline );
+}
 1;

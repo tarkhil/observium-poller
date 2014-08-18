@@ -131,6 +131,8 @@ sub process {
       # Calculate rate and difference, store traffic counters      
       process_stat_oids( $dbport, $port );
       
+      update_rrds( $dbport, $port );
+
       $state->update();
     }
       else {
@@ -150,6 +152,39 @@ sub process {
   # Dump. Just dump
   print Dumper $device->{snmp_data};
 }
+
+sub update_rrds {
+  my ( $dport, $port ) = @_;
+  # Make RRD filename
+  my $portname =  $dport->device->hostname . "/port-" . $dport->ifindex . ".rrd";
+  RRDUtils::InitRRD ( $main::config->{rrddir}, $portname, 
+		      "  \
+      DS:INOCTETS:DERIVE:600:0:12500000000 \
+      DS:OUTOCTETS:DERIVE:600:0:12500000000 \
+      DS:INERRORS:DERIVE:600:0:12500000000 \
+      DS:OUTERRORS:DERIVE:600:0:12500000000 \
+      DS:INUCASTPKTS:DERIVE:600:0:12500000000 \
+      DS:OUTUCASTPKTS:DERIVE:600:0:12500000000 \
+      DS:INNUCASTPKTS:DERIVE:600:0:12500000000 \
+      DS:OUTNUCASTPKTS:DERIVE:600:0:12500000000 \
+      DS:INDISCARDS:DERIVE:600:0:12500000000 \
+      DS:OUTDISCARDS:DERIVE:600:0:12500000000 \
+      DS:INUNKNOWNPROTOS:DERIVE:600:0:12500000000 \
+      DS:INBROADCASTPKTS:DERIVE:600:0:12500000000 \
+      DS:OUTBROADCASTPKTS:DERIVE:600:0:12500000000 \
+      DS:INMULTICASTPKTS:DERIVE:600:0:12500000000 \
+      DS:OUTMULTICASTPKTS:DERIVE:600:0:12500000000 "
+		    );
+
+  RRDUtils::UpdateRRDMap ( $main::config->{rrddir}, $portname,
+			   [ map { $port->{ $_ } } qw /
+							ifInOctets ifOutOctets ifInErrors ifOutErrors
+							ifInUcastPkts ifOutUcastPkts ifInNUcastPkts ifOutNUcastPkts
+							ifInDiscards ifOutDiscards ifInUnknownProtos
+							ifInBroadcastPkts ifOutBroadcastPkts ifInMulticastPkts ifOutMulticastPkts
+						      / ] );
+}
+
 
 sub process_stat_oids {
   my ( $dbport, $port ) = @_;
@@ -200,9 +235,9 @@ sub process_data_oids {
   my ( $dbport, $port ) = @_;
   foreach my $oid ( @{ data_oids() } ) {
     if ( defined $dbport->get_column( lc($oid) ) ) {
-      if ( defined $port->{ oid } ) {
+      if ( defined $port->{ $oid } ) {
 	if ( $dbport->get_column( lc($oid) ) ne $port->{ $oid }  ) {
-	  $dbport->log_event( $oid . ": ".$dbport->get_column( $oid )." -> " . $port->{ $oid },  'interface' );
+	  $dbport->log_event( $oid . ": ".$dbport->get_column( lc($oid) )." -> " . $port->{ $oid },  'interface' );
 	  $dbport->set_column( lc($oid) => $port->{ $oid } );
 	}
       }
@@ -212,7 +247,7 @@ sub process_data_oids {
       }
     }
     else {
-      if ( defined $port->{ oid } ) {
+      if ( defined $port->{ $oid } ) {
 	$dbport->log_event( $oid . ": NULL -> " . $port->{ $oid },  'interface' );
 	$dbport->set_column( lc($oid) => $port->{ $oid } );
       }
@@ -234,10 +269,16 @@ sub fix_port_data {
   # Fix speed
   if ( $port->{ ifHighSpeed } && $port->{ ifSpeed } > ifHiSpeedLimit ) {
     $dbport->ifspeed( $port->{ ifSpeed } * ifHiSpeedMultiplier );
+  } 
+  else {
+    $dbport->ifspeed( $port->{ ifSpeed } );
   }
   
   if ( exists $port->{ dot3StatsDuplexStatus } ) {
     $dbport->ifduplex( $port->{ dot3StatsDuplexStatus } );
+  }
+  else {
+    $dbport->ifduplex( $port->{ ifDuplex } );
   }
   
   if ( exists $port->{ vlanTrunkPortEncapsulationOperType } 
@@ -251,9 +292,12 @@ sub fix_port_data {
   if ( exists $port->{ vmVlan } ) {
     $dbport->ifvlan( $port->{ vmVlan } );
   }
-
-  if ( !defined $dbport->ifvlan() && exists $port->{ dot1qPvid } ) {
+  
+  elsif ( exists $port->{ dot1qPvid } ) {
     $dbport->ifvlan( $port->{ dot1qPvid } );
+  }
+  else {
+    $dbport->ifvlan( $port->{ ifVlan } );
   }
   # Everything but aix-specific done here
 }
@@ -281,8 +325,8 @@ sub stat_oids { [ qw/ifInOctets ifOutOctets ifInErrors ifOutErrors ifInUcastPkts
 
 
 sub data_oids { [ 'ifName','ifDescr','ifAlias', 'ifAdminStatus', 'ifOperStatus', 
-		  'ifMtu', 'ifSpeed', 'ifHighSpeed', 'ifType', 'ifPhysAddress',
-		  'ifPromiscuousMode','ifConnectorPresent','ifDuplex', 'ifTrunk', 'ifVlan' ] }
+		  'ifMtu', 'ifHighSpeed', 'ifType', 
+		  'ifPromiscuousMode','ifConnectorPresent', 'ifTrunk' ] }
 
 has oids_array => ( is => 'ro',
 		    isa => 'ArrayRef[Str]',

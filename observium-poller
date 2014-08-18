@@ -95,7 +95,8 @@ while ( ($try++ < $config->{network}->{retries}) && scalar(keys(%$pinglist)) > 0
   # skoda-889.cpn.infotel.ru : xmt/rcv/%loss = 5/5/0%, min/avg/max = 44.8/45.1/45.5
   # We're interested in hostname and loss percentage
   while (<PING>) {
-    die unless m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%|;
+    next if /ICMP Time Exceeded/;
+    die "Unknown response $_ " unless m|^$RE{net}{domain}{-keep}\s+: xmt/rcv/\%loss = (\d+)/(\d+)/(\d+)\%|;
     if ( $4 != 100 ) {
       my $host = $1;
       die "$_ is wrong" 
@@ -155,6 +156,8 @@ foreach my $devname ( sort keys %$devlist ) {
   if ( $os->{os}->{ $device->os } ) {
     my $os_group = $os->{os}->{ $device->os }->{group};
     $device->{os_group} = $os_group;
+    $device->{os_info} = $os->{os}->{ $device->os }; # $device->os holds OS name from database, $device->{os_info} holds Observium's info
+    # Weird a bit. Maybe one day I'll hold OS info in DB
   }
   my $newstatus = exists $device->{ping} && exists $device->{snmp_data};
   my $rrdpath =  $config->{rrddir}.'/'.$device->hostname;
