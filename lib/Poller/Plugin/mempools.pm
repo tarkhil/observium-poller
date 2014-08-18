@@ -68,23 +68,5 @@ sub process {
   }
 }
 
-sub record {
-  # my ( $self, $device ) = @_;
-  # $self->SUPER::record( $device ) || return 0;
-  # return 0;
-  # my $mempools = $device->get_mempools( [qw/mempool_index mempool_precision mempool_type mempool_oid mempool_id/] );
-  # while ( my $memp = $mempools->next() ) {
-  #   my $memprrd  =  $device->hostname . "/" . safename("mempool-" . $memp->mempool_type . "-" . $memp->mempool_index . ".rrd");
-  #   RRDUtils::InitRRD ($main::config->{rrddir}, $memprrd, " \
-  #    DS:usage:GAUGE:600:-273:1000 ");
-  #   $memp->mempool_precision( 1 ) unless defined $memp->mempool_precision;
-  #   my $load = sprintf( '%.2f', $device->{snmp_data}->{ Utils::translateToName( $memp->mempool_oid ) } / $memp->mempool_precision );
-  #   RRDUtils::UpdateRRD( $main::config->{rrddir}, $memprrd, "N:".$load );
-  #   # Update that crazy database as well
-  #   $memp->update_or_create_related( 'state', { mempool_polled => time, mempool_usage => $load } );
-  # }
-  # return 1;
-}
-
 
 1;
