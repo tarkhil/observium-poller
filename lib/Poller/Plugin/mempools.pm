@@ -49,9 +49,10 @@ sub process {
       print "Unknown memory: ", $memp->mempool_type, ", not processing\n";
       next;
     }
-    if ( exists $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{total} ) {
-      $percent = $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{percent} = sprintf( '%.2f', $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{used} /
-										      $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{total} * 100 );
+    if ( $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{total} > 0 ) {      
+      $percent = $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{percent} = 
+	sprintf( '%.2f', $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{used} /
+		 $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{total} * 100 );
     }
     else {
       $percent = $device->{snmp_data}->{mempool}->{ $memp->mempool_index }->{percent} = 'U';
