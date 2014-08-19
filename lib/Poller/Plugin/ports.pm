@@ -150,7 +150,7 @@ sub process {
   }
   
   # Dump. Just dump
-  print Dumper $device->{snmp_data};
+  debug_msg(2, Dumper $device->{snmp_data} );
 }
 
 sub update_rrds {
