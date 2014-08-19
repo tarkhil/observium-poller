@@ -1,7 +1,0 @@
-#!/usr/bin/perl
-use strict;
-use FindBin;
-use lib "$Bin/lib";
-use Schema;
-use PHP::Serialization;
-use Net::SNMP;
